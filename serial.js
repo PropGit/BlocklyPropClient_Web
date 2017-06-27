@@ -2886,7 +2886,7 @@ function loadPropeller(sock, portPath, action, payload, debug) {
                 sock.send(JSON.stringify({type:"ui-command", action:"close-compile"}));
             }
         })                                                                                                      //Error? Disable listener and display error
-        .catch(function(e) {listen(false); log("Error: " + e.message, mDbug+mcUser, sock); if (cid) {changeBaudrate(cid, originalBaudrate)}});
+        .catch(function(e) {listen(false); log("Error: " + e.message, mDbug+mcUser, sock); binIdx = (binIdx + 1) % 4; if (cid) {changeBaudrate(cid, originalBaudrate)}});
 }
 
 function listen(engage) {
