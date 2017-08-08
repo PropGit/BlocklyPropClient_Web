@@ -417,19 +417,29 @@ function serialTerminal(sock, action, portPath, baudrate, msg) {
     // Instead, update the connection mode so that serial debug data halts.
 //      closePort(findPortId(portPath));
     let conn = findPort(portPath);
-    if (conn) {conn.mode = 'none'}
+    if (conn) {
+      conn.mode = 'none'
+    }
   } else if (action === "msg") {
     // Serial message to send to the device
     // Find port connection id from portPath or socket
-    let cid = findPortId(portPath);
-    if (!cid) {
-      let sIdx = findSocketIdx(sock);
-      if (sIdx > -1) {
-         cid = (sockets[sIdx].serialIdx > -1) ? ports[sockets[sIdx].serialIdx].connId : null;
+    let conn = findPort(portPath);
+    let sIdx = findSocketIdx(sock);
+    if (sIdx > -1) {
+      //Found socket
+      if (!conn) {
+        // port not found; try with socket
+        conn = (sockets[sIdx].serialIdx > -1) ? ports[sockets[sIdx].serialIdx] : null;
+      } else {
+        // port found, ensure it's linked to socket
+        // NOTE: sockets can be disconnected and replaced before we get here - the step below re-establishes the port<->socket link if necessary
+        if (conn.socketIdx !== sIdx) {
+          linkPort(conn.connId, sock);
+        }
       }
     }
-    if (cid) {
-      send(cid, msg);
+    if (conn) {
+      send(conn.connId, msg);
     }
   }
 }
