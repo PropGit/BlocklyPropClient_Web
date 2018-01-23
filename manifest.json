@@ -1,7 +1,7 @@
 {
-  "name": "BlocklyProp Launcher",
+  "name": "BlocklyProp Launcher (Beta)",
   "description": "A Chrome application that connects your Propeller-Powered Hardware to the BlocklyProp website.",
-  "version": "0.7.5",
+  "version": "0.7.5.2",
   "manifest_version": 2,
   "minimum_chrome_version": "45",
   
