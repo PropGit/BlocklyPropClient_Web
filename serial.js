@@ -30,6 +30,8 @@ const defaultClockSpeed = 80000000;
 const defaultClockMode = 0x6F;
 const maxDataSize = 1392;                           //Max data packet size (for packets sent to running Micro Boot Loader)
 
+let macPackets = new Array();                       //Array of small buffers to handle limited transmission size on a Mac (due to a baffling limitation)
+                                                    //These are filled dynamically by send(), only when running on the Mac platform
 // propComm stage values
 const sgIdle = -1;
 const sgHandshake = 0;
@@ -227,8 +229,52 @@ function send(cid, data) {
     } else {
         if (data instanceof ArrayBuffer === false) {data = buffer2ArrayBuffer(data);}
     }
-    return chrome.serial.send(cid, data, function (sendResult) {
+
+    //Split into max 1,024-byte chucks so Mac's driver can transmit properly
+    while (macPackets.length) {macPackets.pop()}
+    let bIdx = 0;
+    while (bIdx < data.byteLength) {
+        let size = Math.min(1024, data.byteLength - bIdx);
+        macPackets.push(new ArrayBuffer(size));
+        (new Uint8Array(macPackets[macPackets.length-1])).set((new Uint8Array(data)).slice(bIdx, bIdx+size), 0);
+        bIdx += size;
+    }
+
+//!!!    //Split into 1,024-byte chucks so Mac's driver can transmit properly
+//!!!    let sendData1 = new ArrayBuffer(1024);
+//!!!    let view1 = new Uint8Array(sendData1);
+//!!!    view1.set((new Uint8Array(data)).slice(0, 1024), 0);
+
+//!!!    let sendData2 = new ArrayBuffer(1024);
+//!!!    let view2 = new Uint8Array(sendData2);
+//!!!    view2.set((new Uint8Array(data)).slice(1024, 1024+1023), 0);
+
+//!!!    view2 = new Uint8Array(data, 1024, 1024);
+//!!!    (new DataView(txData, 0, 4)).setUint32(0, packetId, true);                                       //Store Packet ID
+//!!!    (new DataView(txData, 4, 4)).setUint32(0, transmissionId, true);                                 //Store random Transmission ID
+//!!!    txView.set((new Uint8Array(binImage)).slice(pIdx * 4, pIdx * 4 + (txPacketLength - 2) * 4), 8);  //Store section of binary image
+
+//!!!    return chrome.serial.send(cid, data, function (sendResult) {
+//!!!        chrome.serial.send(cid, data, function (sendResult) {
+//!!!        });
+//!!!    });
+
+//!!!    return chrome.serial.send(cid, data, function (sendResult) {
+//!!!    });
+
+    let transmit = function() {
+        if (macPackets.length) {
+            chrome.serial.send(cid, macPackets.shift(), transmit());
+        }
+    };
+
+    transmit();
+/*
+    return chrome.serial.send(cid, sendData1, function (sendResult) {
+        chrome.serial.send(cid, sendData2, function (sendResult) {
+        });
     });
+*/
 }
 
 chrome.serial.onReceive.addListener(function(info) {
