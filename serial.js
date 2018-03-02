@@ -241,6 +241,7 @@ function send(cid, data) {
         bIdx += size;
     }
     log("[out] macPackets Length: " + macPackets.length, mDbug);
+    log((new Uint8Array(macPackets[0])), mDbug);
 
 //!!!    //Split into 1,024-byte chucks so Mac's driver can transmit properly
 //!!!    let sendData1 = new ArrayBuffer(1024);
@@ -264,6 +265,19 @@ function send(cid, data) {
 //!!!    return chrome.serial.send(cid, data, function (sendResult) {
 //!!!    });
 
+    setTimeout(chrome.serial.send, 2, cid, macPackets[0], function() {});
+    setTimeout(chrome.serial.send, 60, cid, macPackets[1], function() {});
+    setTimeout(chrome.serial.send, 120, cid, macPackets[2], function() {});
+    setTimeout(chrome.serial.send, 180, cid, macPackets[3], function() {});
+    setTimeout(chrome.serial.send, 240, cid, macPackets[4], function() {});
+
+/*
+    macPackets.forEach(function(pkt, idx) {
+        log("index: " + idx, mDbug);
+        setTimeout(chrome.serial.send, 50*idx, cid, pkt, function() {});
+    });
+*/
+/*
     let transmit = function() {
         if (macPackets.length) {
             chrome.serial.send(cid, macPackets.shift(), transmit);
@@ -271,6 +285,7 @@ function send(cid, data) {
     };
 
     transmit();
+*/
 /*
     return chrome.serial.send(cid, sendData1, function (sendResult) {
         chrome.serial.send(cid, sendData2, function (sendResult) {
