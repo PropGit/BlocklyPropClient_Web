@@ -230,84 +230,28 @@ function send(cid, data) {
         if (data instanceof ArrayBuffer === false) {data = buffer2ArrayBuffer(data);}
     }
 
-    //Split into max 1,024-byte chucks so Mac's driver can transmit properly
-    log("[in] macPackets Length: " + macPackets.length, mDbug);
-    while (macPackets.length) {macPackets.pop()}
-    let bIdx = 0;
-    while (bIdx < data.byteLength) {
-        let size = Math.min(1024, data.byteLength - bIdx);
-        macPackets.push(new ArrayBuffer(size));
-        (new Uint8Array(macPackets[macPackets.length-1])).set((new Uint8Array(data)).slice(bIdx, bIdx+size), 0);
-        bIdx += size;
-    }
-    log("[out] macPackets Length: " + macPackets.length, mDbug);
-    log((new Uint8Array(macPackets[0])), mDbug);
-
-//!!!    //Split into 1,024-byte chucks so Mac's driver can transmit properly
-//!!!    let sendData1 = new ArrayBuffer(1024);
-//!!!    let view1 = new Uint8Array(sendData1);
-//!!!    view1.set((new Uint8Array(data)).slice(0, 1024), 0);
-
-//!!!    let sendData2 = new ArrayBuffer(1024);
-//!!!    let view2 = new Uint8Array(sendData2);
-//!!!    view2.set((new Uint8Array(data)).slice(1024, 1024+1023), 0);
-
-//!!!    view2 = new Uint8Array(data, 1024, 1024);
-//!!!    (new DataView(txData, 0, 4)).setUint32(0, packetId, true);                                       //Store Packet ID
-//!!!    (new DataView(txData, 4, 4)).setUint32(0, transmissionId, true);                                 //Store random Transmission ID
-//!!!    txView.set((new Uint8Array(binImage)).slice(pIdx * 4, pIdx * 4 + (txPacketLength - 2) * 4), 8);  //Store section of binary image
-
-//!!!    return chrome.serial.send(cid, data, function (sendResult) {
-//!!!        chrome.serial.send(cid, data, function (sendResult) {
-//!!!        });
-//!!!    });
-
-//!!!    return chrome.serial.send(cid, data, function (sendResult) {
-//!!!    });
-
-//!!!    setTimeout(chrome.serial.send, 2, cid, macPackets[0], function() {});
-//!!!    setTimeout(chrome.serial.send, 60, cid, macPackets[1], function() {});
-//!!!    setTimeout(chrome.serial.send, 120, cid, macPackets[2], function() {});
-//!!!    setTimeout(chrome.serial.send, 180, cid, macPackets[3], function() {});
-//!!!    setTimeout(chrome.serial.send, 240, cid, macPackets[4], function() {});
-
-/*
-    chrome.serial.send(cid, macPackets[0], function() {});
-    chrome.serial.send(cid, macPackets[1], function() {});
-    chrome.serial.send(cid, macPackets[2], function() {});
-    chrome.serial.send(cid, macPackets[3], function() {});
-    chrome.serial.send(cid, macPackets[4], function() {});
-*/
-
-
-    macPackets.forEach(function(pkt, idx) {
-        log("index: " + idx, mDbug);
-        chrome.serial.send(cid, pkt, function() {});
-    });
-
-
-
-/*
-    macPackets.forEach(function(pkt, idx) {
-        log("index: " + idx, mDbug);
-        setTimeout(chrome.serial.send, 50*idx, cid, pkt, function() {});
-    });
-*/
-/*
-    let transmit = function() {
-        if (macPackets.length) {
-            chrome.serial.send(cid, macPackets.shift(), transmit);
+    if (platform !== pfMac) {
+        //Any platform other than Mac? Send as one full packet (any size)
+        chrome.serial.send(cid, data, function() {});
+    } else {
+        //Mac platform? Split into smaller chucks so Mac can transmit properly
+        //Clear out old packets
+        while (macPackets.length) {macPackets.pop()}
+        //Split into 1,024-byte (or less) chucks
+        let bIdx = 0;
+        while (bIdx < data.byteLength) {
+            //More data? Make size <= 1024
+            let size = Math.min(1024, data.byteLength - bIdx);
+            //Add pre-sized element to macPackets then set data into that element
+            macPackets.push(new ArrayBuffer(size));
+            (new Uint8Array(macPackets[macPackets.length-1])).set((new Uint8Array(data)).slice(bIdx, bIdx+size), 0);
+            bIdx += size;
         }
-    };
-
-    transmit();
-*/
-/*
-    return chrome.serial.send(cid, sendData1, function (sendResult) {
-        chrome.serial.send(cid, sendData2, function (sendResult) {
+        //Transmit all (each immediately after the other)
+        macPackets.forEach(function(pkt, idx) {
+            chrome.serial.send(cid, pkt, function() {});
         });
-    });
-*/
+    }
 }
 
 chrome.serial.onReceive.addListener(function(info) {
