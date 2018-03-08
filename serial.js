@@ -3681,7 +3681,7 @@ function generateLoaderPacket(loaderType, packetId, clockSpeed, clockMode) {
         }
         //Prepare loader packet
         //Contains timing pulses + handshake + encoded Micro Boot Loader application + timing pulses
-        txData = new ArrayBuffer(txHandshake.length + 11 + encodedLoader.byteLength + timingPulses.length);
+        txData = new ArrayBuffer(txHandshake.length + 11 + loaderEncodedSize + timingPulses.length);
         txView = new Uint8Array(txData);
         txView.set(txHandshake, 0);
         var txLength = txHandshake.length;
@@ -3691,7 +3691,7 @@ function generateLoaderPacket(loaderType, packetId, clockSpeed, clockMode) {
             rawSize = rawSize >>> 3;
         }
         txView.set(encodedLoader, txLength);
-        txView.set(timingPulses, txLength + encodedLoader.byteLength);
+        txView.set(timingPulses, txLength + loaderEncodedSize);
     } else {
         //Generate special loader's executable packet according to loaderType (> ltCore)
         txData = new ArrayBuffer(2 * 4 + exeSnippet[loaderType].length);                        //Set txData size for header plus executable packet
