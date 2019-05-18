@@ -31,9 +31,7 @@ function openPort(sock, portPath, baudrate, connMode) {
                         .catch(function(e) {reject(e)});
                 } else {
                     //Not already open; attempt to open it
-                    //Prepend default Windows origin if necessary
-                    var path = (platform === pfWin) ? winPortOrigin + portPath : portPath;
-                    chrome.serial.connect(path, {bitrate: baudrate, dataBits: 'eight', parityBit: 'no', stopBits: 'one', ctsFlowControl: false},
+                    chrome.serial.connect(portPath, {bitrate: baudrate, dataBits: 'eight', parityBit: 'no', stopBits: 'one', ctsFlowControl: false},
                         function (openInfo) {
                             if (!chrome.runtime.lastError) {
                                 // No error; update serial port object
