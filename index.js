@@ -81,6 +81,7 @@ const winPortOriginLen = 4;
 /* Serial port ID pattern (index into with platform value)
              Unknown    ChromeOS        Linux             macOS          Windows */
 portPattern = ["",   "/dev/ttyUSB",   "dev/tty",   "/dev/cu.usbserial",   "COM"];
+portDelim =   ["",       "/",            "/",              "/",            "\\"];
 
 // Http and ws servers
 var server = new http.Server();
@@ -397,10 +398,10 @@ function scanWPorts() {
             let wln = [];
             // update wired ports
             portlist.forEach(function(port) {
-                // If Windows, strip potential leading port origin path from port path
-                if ((platform === pfWin) && (port.path.indexOf(winPortOrigin) === 0)) {port.path = port.path.slice(winPortOriginLen)}
+                // Get consistently formatted port path; If Windows, strip off possible leading port origin path for ease in comparison
+                var portPath = ((platform === pfWin) && (port.path.indexOf(winPortOrigin) === 0)) ? port.path.slice(winPortOriginLen) : port.path;
                 // Add only proper port types (platform specific and excluding bluetooth ports)
-                if ((port.path.indexOf(portPattern[platform]) === 0) && (port.displayName.indexOf(' bt ') === -1 && port.displayName.indexOf('bluetooth') === -1)) {
+                if ((portPath.indexOf(portPattern[platform]) === 0) && (port.displayName.indexOf(' bt ') === -1 && port.displayName.indexOf('bluetooth') === -1)) {
                     addPort({path: port.path});
                 }
             });
