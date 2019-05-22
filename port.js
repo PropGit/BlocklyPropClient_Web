@@ -65,7 +65,7 @@ function addPort(alist) {
         ports.push({
             name       : makePortName(alist.path),                     /*[<>""] Friendly port name; never empty, does not include path*/
             path       : alist.path,                                   /*[<>""] Wired port path+name, or wireless port's custom name, or fabricated name; never empty*/
-            connId     : get("connId", alist, null),                   /*[null+] Holds wired serial port's connection id (if open), null (if closed)*/
+            connId     : null,                                         /*[null+] Holds wired serial port's connection id (if open), null (if closed)*/
             mac        : get("mac", alist, ""),                        /*[""+] Holds wireless port's MAC address*/
             ip         : get("ip", alist, ""),                         /*[""+] Wireless port's IP address; */
             life       : (!get("ip", alist, "")) ? wLife : wlLife,     /*[>=0] Initial life value; wired and wireless*/
@@ -116,6 +116,16 @@ function updatePort(port, alist) {
         }
 
 //        log("Updating port '" + port.path + "' with " + alist, mDbug);
+
+        // Inform event page (background.js) of any port open/close events (connId changes)
+        if (exists("connId", alist) && (port.connId !== alist.connId)) {
+            if (port.connId === null) {
+                chrome.runtime.sendMessage("", {connId: alist.connId, state: "opened"});
+            } else {
+                chrome.runtime.sendMessage("", {connId: port.connId, state: "closed"});
+            }
+        }
+
         // Apply updates (if necessary) as well as special handling
         set("name");
         set("path");
@@ -184,6 +194,9 @@ function deletePort(type, clue) {
     let idx = findPortIdx(type, clue);
     if (idx > -1) {
         log("Deleting port: " + ports[idx].path, mDbug);
+        if (ports[idx].connId !== null) {
+            chrome.runtime.sendMessage("", {connId: ports[idx].connId, state: "deleted"});
+        }
         ports.splice(idx, 1);
     }
 }
