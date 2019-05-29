@@ -14,10 +14,13 @@ chrome.app.runtime.onLaunched.addListener(function() {
         }, state: "normal",
         resizable: false
     }, function(win) {
-        chrome.runtime.onMessage.addListener(logPorts);
-        win.onClosed.addListener(closeSerialPorts);
-        win.onClosed.addListener(closeServer);
+        //win.onClosed.addListener(closeSerialPorts);
+        //win.onClosed.addListener(closeServer);
+        //closeSerialPorts();
         });
+    chrome.runtime.onMessage.addListener(logPorts);
+    chrome.runtime.onSuspend.addListener(closeSerialPorts);
+    chrome.runtime.onSuspend.addListener(closeServer);
   });
 
 function logPorts(msg) {
