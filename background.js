@@ -14,13 +14,11 @@ chrome.app.runtime.onLaunched.addListener(function() {
         }, state: "normal",
         resizable: false
     }, function(win) {
-        //win.onClosed.addListener(closeSerialPorts);
-        //win.onClosed.addListener(closeServer);
-        //closeSerialPorts();
+        chrome.runtime.onMessage.addListener(logPorts);
+        win.onClosed.addListener(closeSerialPorts);
+        win.onClosed.addListener(closeServer);
+        closeSerialPorts();
         });
-    chrome.runtime.onMessage.addListener(logPorts);
-    chrome.runtime.onSuspend.addListener(closeSerialPorts);
-    chrome.runtime.onSuspend.addListener(closeServer);
   });
 
 function logPorts(msg) {
@@ -44,11 +42,13 @@ function closeSerialPorts() {
 // Close this app's active serial ports
     //Check any known-open ports
     openPorts.forEach(function(oPort) {
+        console.log("oPort: ", oPort);
         chrome.serial.disconnect(oPort.connId, function() {});
     });
     //Ask OS for others
     chrome.serial.getConnections(function(activeConnections) {
         activeConnections.forEach(function(port) {
+            console.log("port: ", port);
             chrome.serial.disconnect(port.connectionId, function() {});
         });
     });
